@@ -49,7 +49,7 @@ jobs:
       - name: Build
         run: |
           pip install -r packager/requirements.txt
-          python -m packager.packager
+          python -m packager.packager --verbose=1 --glob='*.py' --glob='*.txt' app_a app_b
   
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v2

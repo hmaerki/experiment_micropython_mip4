@@ -35,17 +35,17 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v3
 
-      # - name: Setup Pages
-      #   uses: actions/configure-pages@v3
-      #   with:
-      #     # Upload only web_download directory!
-      #     path: 'web_downloads'
-
       - name: Build
         run: |
           pip install -r packager/requirements.txt
           python -m packager.packager --verbose=1 --glob='*.py' --glob='*.txt' app_a app_b
   
+      - name: Setup Pages
+        uses: actions/configure-pages@v3
+        with:
+          # Upload only web_download directory!
+          path: 'web_downloads'
+
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v2
         with:

@@ -101,10 +101,8 @@ jobs:
 
       - name: Build
         run: |
-          pip install gitpython==3.1.40 mpy-cross==1.12.0
-          cd deploy
-          # python -m pip install --upgrade pip
-          python -m deploy
+          pip install -r packager/requirements.txt
+          python -m packager.packager
   
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v2

@@ -11,6 +11,21 @@
             "program": "${file}",
             "console": "integratedTerminal",
             "justMyCode": false
+        },
+        {
+            "name": "Python: Packager",
+            "type": "python",
+            "request": "launch",
+            "program": "${workspaceFolder}/packager/packager.py",
+            "args": [
+                "--verbose=1",
+                "--glob=*.py",
+                "--glob=*.txt",
+                "app_a",
+                "app_b"
+            ],
+            "console": "integratedTerminal",
+            "justMyCode": false
         }
     ]
 }

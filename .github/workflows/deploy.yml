@@ -26,59 +26,6 @@ concurrency:
 
 jobs:
   # Single deploy job since we're just deploying
-  build-and-commit:
-    # environment:
-    #   name: github-pages
-    #   url: ${{ steps.deployment.outputs.page_url }}
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v3
-
-      - name: Show environment
-        run: |
-          printenv > printenv.txt
-
-      # Build steps
-      - name: Add artifact
-        run: |
-          date >> web_download/index.html
-
-      # Commit and push all changed files. 
-      # Must only affect files that are listed in "paths-ignore".
-      - name: GIT Commit Build Artifacts
-        # Only run on main branch push (e.g. pull request merge).
-        if: github.event_name == 'push'
-        run: |
-          git config --global user.name "Github Action"
-          git config --global user.email "buhtig.hans.maerki@ergoinfo.ch"
-          git add printenv.txt web_download/index.html
-          git commit -m "Github Action: Add download package"
-          git push
-
-      # - name: Setup Pages
-      #   uses: actions/configure-pages@v3
-      #   with:
-      #     # Upload only mip directory!
-      #     path: 'mip'
-
-      # - name: Build
-      #   run: |
-      #     # python -m pip install --upgrade pip
-      #     pip install mpy-cross==1.12.0
-      #     python -m tools.create_mip
-
-      # - name: Upload artifact
-      #   uses: actions/upload-pages-artifact@v2
-      #   with:
-      #     # Upload only mip directory!
-      #     path: 'mip'
-
-      # - name: Deploy to GitHub Pages
-      #   id: deployment
-      #   uses: actions/deploy-pages@v2
-
-  # Single deploy job since we're just deploying
   deploy-folder-web_download:
     environment:
       name: github-pages

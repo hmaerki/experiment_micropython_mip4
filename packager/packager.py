@@ -93,6 +93,7 @@ class TarSrc:
     def py_suffix(self) -> str:
         return ".py"
 
+
 class TarMpyCross(TarSrc):
     @property
     def version(self) -> str:
@@ -101,7 +102,7 @@ class TarMpyCross(TarSrc):
     @property
     def py_suffix(self) -> str:
         return ".mpy"
-    
+
     def _get_file(self, file: pathlib.Path) -> io.BytesIO:
         assert isinstance(file, pathlib.Path)
         # mpy_cross_v6_1.mpy_cross_compile(
@@ -125,16 +126,16 @@ def main(apps: List[str], globs: List[str], verbose: bool) -> None:
     assert isinstance(verbose, bool)
 
     shutil.rmtree(DIRECTORY_WEB_DOWNOADS, ignore_errors=True)
+    DIRECTORY_WEB_DOWNOADS.mkdir()
     repo = git.Repo(DIRECTORY_REPO)
     assert not repo.bare
+    (DIRECTORY_WEB_DOWNOADS/"index.html").write_text("<h1>Downloads</h1>")
     for app in [pathlib.Path(a) for a in apps]:
         if verbose:
             print(f"app: {app.name}")
 
         for branch in repo.branches:
-            index_app = IndexHtml(
-                app= app, verbose=verbose
-            )
+            index_app = IndexHtml(app=app, verbose=verbose)
             if verbose:
                 print(f"  branch={branch.name} sha={branch.commit.hexsha}")
             index_app.add(branch=branch)

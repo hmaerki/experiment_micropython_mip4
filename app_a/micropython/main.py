@@ -1,5 +1,4 @@
 import mip
-import sys
 import urequests
 import micropython
 import config_secrets
@@ -28,27 +27,24 @@ def new_version_available(tar_version="src"):
     url = config_secrets.URL_APP + config_secrets.BRANCH
     response = urequests.get(url)
     assert response.status_code == 200, (response.status_code, url)
-    with open("config_latest_package.py", "w") as f:
-        f.write(response.text)
+    latest_package = response.json()
 
-    try:
-        del sys.modules["config_latest_package"]
-    except KeyError:
-        pass
-    import config_latest_package
+    # print("response.text", response.text)
+    # print("latest_package", latest_package)
 
-    dict_tar = config_latest_package.DICT_TARS[tar_version]
+    dict_tar = latest_package["dict_tars"][tar_version]
+
     try:
         import config_package_manifest
     except ImportError:
         print("New download: Failed to 'import config_package_manifest'")
         return dict_tar
-
-    if config_latest_package.COMMIT_SHA == config_package_manifest.COMMIT_SHA:
+    # print("dict_tar", dict_tar)
+    if latest_package["commit_sha"] == config_package_manifest.COMMIT_SHA:
         print("No new download!")
         return None
 
-    print(f"New download: {config_latest_package.COMMIT_PRETTY}")
+    print(f"New download: {latest_package['commit_pretty']}")
     return dict_tar
 
 
@@ -59,3 +55,5 @@ while True:
         import utils_download_package
 
         utils_download_package.download_new_version(dict_tar)
+
+        print("A")

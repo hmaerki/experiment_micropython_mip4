@@ -163,10 +163,10 @@ def main(apps: List[str], globs: List[str], verbose: bool) -> None:
             if verbose:
                 print(f"app: {app.name}")
 
-            for branch in repo.branches:
-                with index_top.new_index(
-                    relative=app.name, title=f"Application'{app.name}'"
-                ) as index_app:
+            with index_top.new_index(
+                relative=app.name, title=f"Application <b>{app.name}</b>"
+            ) as index_app:
+                for branch in repo.branches:
                     index_app.add_branch(branch=branch)
 
                     globs = ["*.py", "*.txt"]

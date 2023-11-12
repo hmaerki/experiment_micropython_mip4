@@ -1,32 +1,41 @@
 {
-    // Use IntelliSense to learn about possible attributes.
-    // Hover to view descriptions of existing attributes.
-    // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
-    "version": "0.2.0",
-    "configurations": [
-        {
-            "name": "Python: Current File",
-            "type": "python",
-            "request": "launch",
-            "program": "${file}",
-            "console": "integratedTerminal",
-            "justMyCode": false
-        },
-        {
-            "name": "Python: Packager",
-            "type": "python",
-            "request": "launch",
-            "program": "${workspaceFolder}/packager/packager.py",
-            "args": [
-                "--verbose=1",
-                "--no-checkout=1",
-                "--glob=*.py",
-                "--glob=*.txt",
-                "app_a",
-                "app_b"
-            ],
-            "console": "integratedTerminal",
-            "justMyCode": false
-        }
-    ]
+  // Use IntelliSense to learn about possible attributes.
+  // Hover to view descriptions of existing attributes.
+  // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "Python: Current File",
+      "type": "python",
+      "request": "launch",
+      "program": "${file}",
+      "console": "integratedTerminal",
+      "justMyCode": false
+    },
+    {
+      "name": "Python: Packager",
+      "type": "python",
+      "request": "launch",
+      "program": "${workspaceFolder}/packager/packager.py",
+      "args": [
+        "--verbose=1",
+        "--no-checkout=1",
+        "--glob=*.py",
+        "--glob=*.txt",
+        "app_a",
+        "app_b"
+      ],
+      "console": "integratedTerminal",
+      "justMyCode": false
+    },
+    {
+      "name": "run_from_pc (Micropython)",
+      "type": "python",
+      "request": "launch",
+      "program": "${workspaceFolder}/app_a/run_from_pc.py",
+      "console": "integratedTerminal",
+      "cwd": "${workspaceFolder}/app_a",
+      "justMyCode": false
+    }
+  ]
 }

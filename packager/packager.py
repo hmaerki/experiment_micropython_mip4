@@ -229,7 +229,7 @@ def main(apps: List[str], globs: List[str], verbose: bool, no_checkout: bool) ->
                 print(f"app: {app.name}")
             with index_top.new_index(
                 relative=app.name,
-                title=f"Application <b>{app.name}</b>",
+                title=f"Application: {app.name}",
             ) as index_app:
                 for branch in git.remote_heads:
                     branch = git.checkout(remote_head=branch, no_checkout=no_checkout)

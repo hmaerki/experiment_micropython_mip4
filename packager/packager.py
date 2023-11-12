@@ -172,7 +172,9 @@ class TarSrc:
 
                 for glob in globs:
                     for file in app_dir.rglob(glob):
-                        name = str(file.with_suffix(self.py_suffix).relative_to(app_dir))
+                        name = str(
+                            file.with_suffix(self.py_suffix).relative_to(app_dir)
+                        )
                         files.append(name)
                         if verbose:
                             print(f"    TarSrc: {name=}")
@@ -190,8 +192,8 @@ class TarSrc:
         data = self.tar_filename.read_bytes()
         self.dict_tar = dict(
             link=link,
-            sha256= hashlib.sha256(data).hexdigest(),
-            size_bytes= len(data),
+            sha256=hashlib.sha256(data).hexdigest(),
+            size_bytes=len(data),
         )
 
     @property
@@ -241,8 +243,10 @@ def main(apps: List[str], globs: List[str], verbose: bool, no_checkout: bool) ->
             # app_name: app_a
             # app_dir: app_a/micropython
             app_name, delim, app_dir = _app.partition(":")
-            assert delim =="", f"Expected '{_app}' to contain a ':' delimited (<name>:<path>)"
-            
+            assert (
+                delim == ":"
+            ), f"Expected '{_app}' to contain a ':' delimited (<name>:<path>)"
+
             if verbose:
                 print(f"app: {app_name}")
             with index_top.new_index(
@@ -262,7 +266,7 @@ def main(apps: List[str], globs: List[str], verbose: bool, no_checkout: bool) ->
                             verbose=verbose,
                         )
                         index_app.add_index(link=tar.tar_filename, tag="p")
-                        dict_tars[tar.version] =tar.dict_tar
+                        dict_tars[tar.version] = tar.dict_tar
 
                     index_app.add_branch(branch=branch, dict_tars=dict_tars)
 

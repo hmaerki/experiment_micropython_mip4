@@ -77,12 +77,12 @@ class IndexHtml:
 class TarSrc:
     def __init__(
         self,
-        branch: git.Head,
+        head: git.Head,
         app: pathlib.Path,
         globs: List[str],
         verbose: bool,
     ):
-        assert isinstance(branch, git.Head)
+        assert isinstance(head, git.Head)
         assert isinstance(app, pathlib.Path)
         assert isinstance(globs, list)
         assert isinstance(verbose, bool)
@@ -93,7 +93,7 @@ class TarSrc:
             DIRECTORY_WEB_DOWNOADS
             / app.name
             / self.version
-            / (branch.commit.hexsha + TAR_SUFFIX)
+            / (head.commit.hexsha + TAR_SUFFIX)
         )
 
         tar_filename.parent.mkdir(parents=True, exist_ok=True)
@@ -197,7 +197,7 @@ def main(apps: List[str], globs: List[str], verbose: bool) -> None:
 
                     globs = ["*.py", "*.txt"]
                     for cls_tar in (TarSrc, TarMpyCross):
-                        cls_tar(branch=branch, app=app, globs=globs, verbose=verbose)
+                        cls_tar(head=head, app=app, globs=globs, verbose=verbose)
 
 
 if __name__ == "__main__":

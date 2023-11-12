@@ -49,7 +49,7 @@ class IndexHtml:
     def add_href(self, link: pathlib.Path, label: str) -> None:
         relative = str(link.relative_to(self.directory))
         self.html.write(
-            f'<p><a href="{relative}">{relative} {label}</a></p>\n'
+            f'<p><code>{relative}</code> <a href="{relative}">{label}</a></p>\n'
         )
 
     def new_index(self, relative: str, title: str) -> "IndexHtml":

@@ -65,7 +65,7 @@ class IndexHtml:
         self.set_href(link=directory, label=title)
         return IndexHtml(directory=directory, title=title, verbose=self._verbose)
 
-    def add_branch(self, head: git.Head) -> None:
+    def add_branch(self, head: git.HEAD) -> None:
         if self._verbose:
             print(f"  branch={head.name} sha={head.commit.hexsha}")
         latest = self.directory / "latest" / head.name
@@ -77,12 +77,12 @@ class IndexHtml:
 class TarSrc:
     def __init__(
         self,
-        head: git.Head,
+        head: git.HEAD,
         app: pathlib.Path,
         globs: List[str],
         verbose: bool,
     ):
-        assert isinstance(head, git.Head)
+        assert isinstance(head, git.HEAD)
         assert isinstance(app, pathlib.Path)
         assert isinstance(globs, list)
         assert isinstance(verbose, bool)
@@ -167,9 +167,11 @@ class Git:
                 return ref
         raise Exception(f"Not found: remote_head '{remote_head}'")
 
-    def checkout(self, remote_head: str) -> git.Head:
+    def checkout(self, remote_head: str) -> git.HEAD:
         ref = self._get_ref(remote_head=remote_head)
-        return ref.checkout()
+        head = ref.checkout()
+        assert isinstance(head,git.HEAD)
+        return head
 
 
 def main(apps: List[str], globs: List[str], verbose: bool) -> None:

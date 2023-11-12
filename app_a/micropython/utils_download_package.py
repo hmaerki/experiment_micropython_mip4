@@ -1,6 +1,5 @@
 import os
 import urequests
-import errno
 import machine
 import hashlib
 import tarfile
@@ -10,25 +9,47 @@ import config_secrets
 TAR_FILENAME = const("config_package.tar")
 
 
-class _DirCacheObsolete:
-    def __init__(self):
-        # List all directories
-        # See: https://docs.micropython.org/en/latest/library/os.html#module-os
-        self._dirs = [i[0] for i in os.ilistdir() if i[1] == 0x4000]
+# class _DirCacheObsolete:
+#     def __init__(self):
+#         # List all directories
+#         # See: https://docs.micropython.org/en/latest/library/os.html#module-os
+#         self._dirs = [i[0] for i in os.ilistdir() if i[1] == 0x4000]
 
-    def makedir_for_file(self, filename: str) -> None:
-        """
-        If the filename is in a directory,
-        creates that directory if it not exists.
-        """
-        dirname = filename.rpartition("/")[0]
-        if dirname == "":
-            return
-        if dirname in self._dirs:
-            return
-        print(f"Create directory {dirname}")
-        os.mkdir(dirname)
-        self._dirs.append(dirname)
+#     def makedir_for_file(self, filename: str) -> None:
+#         """
+#         If the filename is in a directory,
+#         creates that directory if it not exists.
+#         """
+#         dirname = filename.rpartition("/")[0]
+#         if dirname == "":
+#             return
+#         if dirname in self._dirs:
+#             return
+#         print(f"Create directory {dirname}")
+#         os.mkdir(dirname)
+#         self._dirs.append(dirname)
+
+
+# def _makedirs_obsolete(filename: str):
+#     """
+#     If the filename is in a directory,
+#     creates that directory if it not exists.
+#     Recurses if required.
+#     """
+#     dirname = filename.rpartition("/")[0]
+#     if dirname == "":
+#         # Top directory
+#         return
+#     try:
+#         os.mkdir(dirname)
+#     except OSError as ex:
+#         if ex.errno == errno.EEXIST:
+#             return
+#         if ex.errno == errno.ENOENT:
+#             # The top directory is missing
+#             _makedirs_obsolete(dirname)
+#             _makedirs_obsolete(filename)
+#         assert False, ex
 
 
 def _save_response_to_file(response, chunk_size=2048):
@@ -45,28 +66,6 @@ def _save_response_to_file(response, chunk_size=2048):
 
         response.raw.close()
         return binascii.hexlify(hash.digest()).decode("ascii")
-
-
-def _makedirs_obsolete(filename: str):
-    """
-    If the filename is in a directory,
-    creates that directory if it not exists.
-    Recurses if required.
-    """
-    dirname = filename.rpartition("/")[0]
-    if dirname == "":
-        # Top directory
-        return
-    try:
-        os.mkdir(dirname)
-    except OSError as ex:
-        if ex.errno == errno.EEXIST:
-            return
-        if ex.errno == errno.ENOENT:
-            # The top directory is missing
-            _makedirs_obsolete(dirname)
-            _makedirs_obsolete(filename)
-        assert False, ex
 
 
 def _unpack_tarfile():
@@ -96,4 +95,5 @@ def download_new_version(dict_tar: dict) -> None:
 
     _unpack_tarfile()
 
+    os.sync()
     machine.soft_reset()

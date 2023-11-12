@@ -178,7 +178,7 @@ class TarSrc:
                         files.append(name)
                         if verbose:
                             print(f"    TarSrc: {name=}")
-                        add_file(name, file.read_bytes())
+                        add_file(name, self._get_bytes(file))
 
                 lines: List[str] = [
                     f"FILES={files!r}",
@@ -195,6 +195,9 @@ class TarSrc:
             sha256=hashlib.sha256(data).hexdigest(),
             size_bytes=len(data),
         )
+
+    def _get_bytes(self, file: pathlib.Path) -> bytes:
+        return file.read_bytes()
 
     @property
     def version(self) -> str:
@@ -214,15 +217,17 @@ class TarMpyCross(TarSrc):
     def py_suffix(self) -> str:
         return ".mpy"
 
-    def _get_file(self, file: pathlib.Path) -> io.BytesIO:
+    def _get_bytes(self, file: pathlib.Path) -> bytes:
         assert isinstance(file, pathlib.Path)
         with tempfile.NamedTemporaryFile() as tmp_file:
             args = [mpy_cross_v6_1.MPY_CROSS_PATH, "-o", tmp_file.name, str(file)]
             proc = subprocess.run(args, capture_output=True)
             proc.check_returncode()
             if self._verbose:
-                print(f"  mpy-cross returned: {proc.stdout.decode().strip()}")
-            return io.BytesIO(pathlib.Path(tmp_file.name).read_bytes())
+                print(
+                    f"  mpy-cross returned: {proc.stdout.decode().strip()} / {proc.stderr.decode().strip()}"
+                )
+            return pathlib.Path(tmp_file.name).read_bytes()
 
 
 def main(apps: List[str], globs: List[str], verbose: bool, no_checkout: bool) -> None:

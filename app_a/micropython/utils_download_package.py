@@ -94,7 +94,7 @@ def _remove_obsolete_files():
         os.remove(file)
 
     if "main.mpy" in files:
-        print("'main.mpy will not be started by micropython. Add wrapper!")
+        print("'main.mpy' will not be started by micropython. Add patch!")
         os.rename("main.mpy", "main2.mpy")
         with open("main.py", "w") as f:
             f.write("import main2\n")

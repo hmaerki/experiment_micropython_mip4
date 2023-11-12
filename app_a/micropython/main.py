@@ -45,3 +45,5 @@ while True:
         import utils_download_package
 
         utils_download_package.download_new_version(dict_tar)
+
+    print("x")

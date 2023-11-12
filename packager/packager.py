@@ -31,7 +31,7 @@ class IndexHtml:
         self.directory = directory
         directory.mkdir(parents=True, exist_ok=True)
         self.html = self.filename.open("w")
-        self.set_h1(title=title)
+        self.add_h1(title=title)
 
     @property
     def filename(self) -> pathlib.Path:
@@ -43,26 +43,18 @@ class IndexHtml:
     def __exit__(self, *args):
         self.html.close()
 
-    def set_h1(self, title: str) -> None:
+    def add_h1(self, title: str) -> None:
         self.html.write(f"<h1>{title}</h1>\n")
 
-    # def package(self, filename_json: pathlib.Path) -> None:
-    #     link = filename_json.relative_to(DIRECTORY_MIP)
-    #     self.html.write(f'<h2>Package file</h2>\n')
-    #     self.html.write(f'<p><a href="{link}">{link}</a></p>\n')
-    #     self.html.write(f"<pre>{filename_json.read_text()}</pre>\n")
-
-    # def write(self)-> None:
-    #     (DIRECTORY_MIP /"index.html").write_text(self.html.getvalue())
-
-    def set_href(self, link: pathlib.Path, label: str) -> None:
+    def add_href(self, link: pathlib.Path, label: str) -> None:
+        relative = str(link.relative_to(self.directory))
         self.html.write(
-            f'<p><a href="{link.relative_to(self.directory)}">{label}</a></p>\n'
+            f'<p><a href="{relative}">{relative} {label}</a></p>\n'
         )
 
     def new_index(self, relative: str, title: str) -> "IndexHtml":
         directory = self.directory / relative
-        self.set_href(link=directory, label=title)
+        self.add_href(link=directory, label=title)
         return IndexHtml(directory=directory, title=title, verbose=self._verbose)
 
     def add_branch(self, branch: str, sha: str) -> None:
@@ -71,7 +63,7 @@ class IndexHtml:
         latest = self.directory / "latest" / branch
         latest.parent.mkdir(parents=True, exist_ok=True)
         latest.write_text(sha + TAR_SUFFIX)
-        self.set_href(link=latest, label=f"Latest on branch {branch} ({sha})")
+        self.add_href(link=latest, label=f"Latest on branch {branch} ({sha})")
 
 
 class TarSrc:
@@ -200,7 +192,7 @@ def main(apps: List[str], globs: List[str], verbose: bool) -> None:
                     globs = ["*.py", "*.txt"]
                     for cls_tar in (TarSrc, TarMpyCross):
                         tar = cls_tar(head=head, app=app, globs=globs, verbose=verbose)
-                        index_app.set_href(
+                        index_app.add_href(
                             link=tar.tar_filename, label=f"Package {tar.version}"
                         )
 

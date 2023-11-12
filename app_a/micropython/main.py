@@ -72,23 +72,20 @@ print("Ready")
 
 URL_APP = "https://hmaerki.github.io/experiment_micropython_mip4/app_a"
 response = urequests.get(URL_APP + "/latest/main")
-print(dir(response))
 assert response.status_code == 200
-sha = response.text
-print(f"{sha=}")
 with open("config_latest_package.py", "w") as f:
     f.write(response.text)
 
 print("mem_alloc", gc.mem_alloc())
 print("mem_free", gc.mem_free())
 
-# https://github.com/SpotlightKid/mrequests/
-response = urequests.get(URL_APP + "/src/" + sha, stream=True)
+import config_latest_package
+url = URL_APP + config_latest_package.dict_tars["src"]
+response = urequests.get(URL_APP + url, stream=True)
 assert response.status_code == 200
 
-
-
 def save(response, f, chunk_size=2048):
+    # https://github.com/SpotlightKid/mrequests/
     size = 0
     hash = hashlib.sha256()
 

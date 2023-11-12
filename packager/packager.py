@@ -133,7 +133,7 @@ class IndexHtml:
         latest.parent.mkdir(parents=True, exist_ok=True)
         lines = [
             f"commit_sha={branch.sha}",
-            f"tars={dict_tars!r}", "",
+            f"dict_tars={dict_tars!r}", "",
         ]
         latest.write_text("\n".join(lines))
         self.add_index(link=latest, tag="h2")

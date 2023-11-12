@@ -21,6 +21,50 @@ assert DIRECTORY_APP_B.is_dir()
 TAR_SUFFIX = ".tar"
 
 
+class GitBranch:
+    def __init__(self, branch: str, head: git.HEAD):
+        assert isinstance(branch, str)
+        assert isinstance(head, git.HEAD)
+        self.branch = branch
+        self.head = head
+
+    @property
+    def sha(self)  -> str:
+        return self. head.commit.hexsha
+
+    @property
+    def commit_pretty(self) -> str:
+        commit = self.head.commit
+        return f"{self.branch} - {commit.autor.name} {commit.autor.email}: {commit.summary}"
+
+class Git:
+    def __init__(self):
+        self._repo = git.Repo(DIRECTORY_REPO)
+        assert not self._repo.bare
+        self.remote_heads: List[str] = [ref.remote_head for ref in self._iter_refs]
+
+    @property
+    def _iter_refs(self) -> Iterator[git.RemoteReference]:
+        for ref in self._repo.refs:
+            if not isinstance(ref, git.RemoteReference):
+                continue
+            if ref.remote_head == "HEAD":
+                continue
+            yield ref
+
+    def _get_ref(self, remote_head: str) -> git.RemoteReference:
+        for ref in self._iter_refs:
+            if ref.remote_head == remote_head:
+                return ref
+        raise Exception(f"Not found: remote_head '{remote_head}'")
+
+    def checkout(self, remote_head: str) -> GitBranch:
+        ref = self._get_ref(remote_head=remote_head)
+        head = ref.checkout()
+        assert isinstance(head, git.HEAD)
+        return GitBranch(branch=remote_head, head=head)
+
+
 class IndexHtml:
     def __init__(self, directory: pathlib.Path, title: str, verbose: bool):
         assert isinstance(directory, pathlib.Path)
@@ -64,35 +108,32 @@ class IndexHtml:
         self.add_href(link=directory, label=title)
         return IndexHtml(directory=directory, title=title, verbose=self._verbose)
 
-    def add_branch(self, branch: str, sha: str) -> None:
+    def add_branch(self, branch: GitBranch) -> None:
+        assert isinstance(branch, GitBranch)
         if self._verbose:
-            print(f"  branch={branch} sha={sha}")
+            print(f"  branch={branch.branch} sha={branch.sha}")
         latest = self.directory / "latest" / branch
         latest.parent.mkdir(parents=True, exist_ok=True)
-        latest.write_text(sha + TAR_SUFFIX)
+        latest.write_text(branch.sha + TAR_SUFFIX)
         self.add_index(link=latest, tag="h2")
 
 
 class TarSrc:
     def __init__(
         self,
-        branch: str,
-        head: git.HEAD,
+        branch: GitBranch,
         app: pathlib.Path,
         globs: List[str],
         verbose: bool,
     ):
-        assert isinstance(branch, str)
-        assert isinstance(head, git.HEAD)
+        assert isinstance(branch, GitBranch)
         assert isinstance(app, pathlib.Path)
         assert isinstance(globs, list)
         assert isinstance(verbose, bool)
 
         self._verbose = verbose
-        hexsha = head.commit.hexsha
-
         self.tar_filename = (
-            DIRECTORY_WEB_DOWNOADS / app.name / self.version / (hexsha + TAR_SUFFIX)
+            DIRECTORY_WEB_DOWNOADS / app.name / self.version / (branch.sha + TAR_SUFFIX)
         )
 
         self.tar_filename.parent.mkdir(parents=True, exist_ok=True)
@@ -110,8 +151,9 @@ class TarSrc:
                 tarinfo = tarfile.TarInfo(name="package_properties.py")
                 lines: List[str] = [
                     f"FILES={files!r}",
-                    f"branch={branch!r}",
-                    f"sha={hexsha!r}",
+                    f"branch={branch.branch!r}",
+                    f"sha={branch.sha!r}",
+                    f"commit={branch.commit_pretty!r}",
                 ]
                 fileio = io.StringIO("\n".join(lines))
                 tar.addfile(tarinfo, fileio)
@@ -149,34 +191,6 @@ class TarMpyCross(TarSrc):
             return io.BytesIO(pathlib.Path(tmp_file.name).read_bytes())
 
 
-class Git:
-    def __init__(self):
-        self._repo = git.Repo(DIRECTORY_REPO)
-        assert not self._repo.bare
-        self.remote_heads: List[str] = [ref.remote_head for ref in self._iter_refs]
-
-    @property
-    def _iter_refs(self) -> Iterator[git.RemoteReference]:
-        for ref in self._repo.refs:
-            if not isinstance(ref, git.RemoteReference):
-                continue
-            if ref.remote_head == "HEAD":
-                continue
-            yield ref
-
-    def _get_ref(self, remote_head: str) -> git.RemoteReference:
-        for ref in self._iter_refs:
-            if ref.remote_head == remote_head:
-                return ref
-        raise Exception(f"Not found: remote_head '{remote_head}'")
-
-    def checkout(self, remote_head: str) -> git.HEAD:
-        ref = self._get_ref(remote_head=remote_head)
-        head = ref.checkout()
-        assert isinstance(head, git.HEAD)
-        return head
-
-
 def main(apps: List[str], globs: List[str], verbose: bool) -> None:
     assert isinstance(apps, list)
     assert isinstance(globs, list)
@@ -197,14 +211,13 @@ def main(apps: List[str], globs: List[str], verbose: bool) -> None:
                 title=f"Application <b>{app.name}</b>",
             ) as index_app:
                 for branch in git.remote_heads:
-                    head = git.checkout(remote_head=branch)
-                    index_app.add_branch(branch=branch, sha=head.commit.hexsha)
+                    branch = git.checkout(remote_head=branch)
+                    index_app.add_branch(branch=branch)
 
                     globs = ["*.py", "*.txt"]
                     for cls_tar in (TarSrc, TarMpyCross):
                         tar = cls_tar(
                             branch=branch,
-                            head=head,
                             app=app,
                             globs=globs,
                             verbose=verbose,

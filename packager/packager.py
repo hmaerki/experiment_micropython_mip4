@@ -186,7 +186,7 @@ class TarSrc:
                     commit_sha=branch.sha,
                     commit_pretty=branch.commit_pretty,
                 )
-                add_file("config_package_manifest.json", json.dumps(dict_manifest, indent=4))
+                add_file("config_package_manifest.json", json.dumps(dict_manifest, indent=4).encode())
 
         data = self.tar_filename.read_bytes()
         self.dict_tar = dict(
@@ -221,7 +221,11 @@ class TarMpyCross(TarSrc):
         with tempfile.NamedTemporaryFile() as tmp_file:
             args = [mpy_cross_v6_1.MPY_CROSS_PATH, "-o", tmp_file.name, str(file)]
             proc = subprocess.run(args, capture_output=True)
-            proc.check_returncode()
+            if proc.returncode:
+                print(f"ERROR: {args}")
+                print(f"  stdout={proc.stdout}")
+                print(f"  stderr={proc.stderr}")
+                raise Exception(f"Error: {args}")
             if self._verbose:
                 print(
                     f"  mpy-cross returned: {proc.stdout.decode().strip()} / {proc.stderr.decode().strip()}"

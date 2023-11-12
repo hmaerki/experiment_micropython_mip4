@@ -81,6 +81,7 @@ def _unpack_tarfile():
 
 def _remove_obsolete_files():
     for file in os.listdir():
+        pass
         
 
 def download_new_version(dict_tar: dict) -> None:

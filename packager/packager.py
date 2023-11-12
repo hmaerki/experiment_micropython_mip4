@@ -5,6 +5,7 @@ import subprocess
 import shutil
 import io
 import tarfile
+import html
 from typing import Iterator, List
 
 import git
@@ -99,16 +100,16 @@ class IndexHtml:
         self.html.close()
 
     def add_h1(self, title: str) -> None:
-        self.html.write(f"<h1>{title}</h1>\n")
+        self.html.write(f"<h1>{html.escape(title)}</h1>\n")
 
     def add_href(self, link: pathlib.Path, label: str) -> None:
         relative = str(link.relative_to(self.directory))
         self.html.write(
-            f'<p><code>{relative}</code> <a href="{relative}">{label}</a></p>\n'
+            f'<p><code>{relative}</code> <a href="{relative}">{html.escape(label)}</a></p>\n'
         )
 
     def add_italic(self, text: str) -> None:
-        self.html.write(f"<p><i>{text}</i></p>\n")
+        self.html.write(f"<p><i>{html.escape(text)}</i></p>\n")
 
     def add_index(self, link: pathlib.Path, tag: str) -> None:
         size = link.stat().st_size

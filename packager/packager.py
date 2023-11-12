@@ -65,13 +65,13 @@ class IndexHtml:
         self.set_href(link=directory, label=title)
         return IndexHtml(directory=directory, title=title, verbose=self._verbose)
 
-    def add_branch(self, branch: git.Head) -> None:
+    def add_branch(self, head: git.Head) -> None:
         if self._verbose:
-            print(f"  branch={branch.name} sha={branch.commit.hexsha}")
-        latest = self.directory / "latest" / branch.name
+            print(f"  branch={head.name} sha={head.commit.hexsha}")
+        latest = self.directory / "latest" / head.name
         latest.parent.mkdir(parents=True, exist_ok=True)
-        latest.write_text(branch.commit.hexsha + TAR_SUFFIX)
-        self.set_href(link=latest, label=f"Latest on branch {branch.name}")
+        latest.write_text(head.commit.hexsha + TAR_SUFFIX)
+        self.set_href(link=latest, label=f"Latest on branch {head.name}")
 
 
 class TarSrc:
@@ -167,9 +167,9 @@ class Git:
                 return ref
         raise Exception(f"Not found: remote_head '{remote_head}'")
 
-    def checkout(self, remote_head: str) -> None:
+    def checkout(self, remote_head: str) -> git.Head:
         ref = self._get_ref(remote_head=remote_head)
-        ref.checkout()
+        return ref.checkout()
 
 
 def main(apps: List[str], globs: List[str], verbose: bool) -> None:
@@ -192,8 +192,8 @@ def main(apps: List[str], globs: List[str], verbose: bool) -> None:
                 title=f"Application <b>{app.name}</b>",
             ) as index_app:
                 for branch in git.remote_heads:
-                    git.checkout(remote_head=branch)
-                    index_app.add_branch(branch=branch)
+                    head = git.checkout(remote_head=branch)
+                    index_app.add_branch(head=head)
 
                     globs = ["*.py", "*.txt"]
                     for cls_tar in (TarSrc, TarMpyCross):

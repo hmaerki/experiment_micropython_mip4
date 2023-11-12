@@ -163,8 +163,13 @@ def main(apps: List[str], globs: List[str], verbose: bool) -> None:
             if verbose:
                 print(f"app: {app.name}")
 
-            for branch in repo.branches:
-                print(f"BRANCH {branch.name}: {branch}")
+            for branch in repo.refs:
+                if not isinstance(branch, git.RemoteReference):
+                    continue
+                if branch.remote_head== "HEAD":
+                    continue
+                print(f"BRANCH {branch.remote_head}: {branch}")
+                branch.checkout()
 
             # with index_top.new_index(
             #     relative=app.name, title=f"Application <b>{app.name}</b>"

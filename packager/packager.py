@@ -126,7 +126,7 @@ class IndexHtml:
         assert isinstance(dict_tars, dict)
         if self._verbose:
             print(f"  branch={branch.name} sha={branch.sha}")
-        latest = self.directory / "latest" / branch.name"
+        latest = self.directory / "latest" / branch.name
         latest.parent.mkdir(parents=True, exist_ok=True)
         dict_json = dict(
             COMMIT_SHA=branch.sha,

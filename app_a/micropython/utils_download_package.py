@@ -94,7 +94,7 @@ def _remove_obsolete_files():
         os.remove(file)
 
 
-def download_new_version(dict_tar: dict, config_package_manifest: dict) -> None:
+def download_new_version(dict_tar: dict) -> None:
     url = f"{config_secrets.URL_APP}/{dict_tar['link']}"
     print(f"Download new package from: {url}")
     response = urequests.get(url, stream=True)

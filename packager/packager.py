@@ -5,7 +5,7 @@ import subprocess
 import shutil
 import io
 import tarfile
-from typing import List
+from typing import Iterator, List
 
 import git
 import mpy_cross_v6_1
@@ -148,16 +148,28 @@ class TarMpyCross(TarSrc):
 
 class Git:
     def __init__(self):
-        repo = git.Repo(DIRECTORY_REPO)
-        assert not repo.bare
-        self.list_branches = []
-        for branch in repo.refs:
-            if not isinstance(branch, git.RemoteReference):
+        self._repo = git.Repo(DIRECTORY_REPO)
+        assert not self._repo.bare
+        self.remote_heads: List[str] = [ref.remote_head for ref in self._iter_refs]
+
+    @property
+    def _iter_refs(self) -> Iterator[git.RemoteReference]:
+        for ref in self._repo.refs:
+            if not isinstance(ref, git.RemoteReference):
                 continue
-            if branch.remote_head == "HEAD":
+            if ref.remote_head == "HEAD":
                 continue
-            print(f"BRANCH {branch.remote_head}: {branch}")
-            branch.checkout()
+            yield ref
+
+    def _get_ref(self, remote_head: str) -> git.RemoteReference:
+        for ref in self._iter_refs:
+            if ref.remote_head == remote_head:
+                return ref
+        raise Exception(f"Not found: remote_head '{remote_head}'")
+
+    def checkout(self, remote_head: str) -> None:
+        ref = self._get_ref(remote_head=remote_head)
+        ref.checkout()
 
 
 def main(apps: List[str], globs: List[str], verbose: bool) -> None:
@@ -169,31 +181,23 @@ def main(apps: List[str], globs: List[str], verbose: bool) -> None:
     DIRECTORY_WEB_DOWNOADS.mkdir()
     git = Git()
 
-    return
     with IndexHtml(
         directory=DIRECTORY_WEB_DOWNOADS, title="Downloads", verbose=verbose
     ) as index_top:
         for app in [pathlib.Path(a).absolute() for a in apps]:
             if verbose:
                 print(f"app: {app.name}")
+            with index_top.new_index(
+                relative=app.name,
+                title=f"Application <b>{app.name}</b>",
+            ) as index_app:
+                for branch in git.remote_heads:
+                    git.checkout(remote_head=branch)
+                    index_app.add_branch(branch=branch)
 
-            for branch in repo.refs:
-                if not isinstance(branch, git.RemoteReference):
-                    continue
-                if branch.remote_head == "HEAD":
-                    continue
-                print(f"BRANCH {branch.remote_head}: {branch}")
-                branch.checkout()
-
-            # with index_top.new_index(
-            #     relative=app.name, title=f"Application <b>{app.name}</b>"
-            # ) as index_app:
-            #     for branch in repo.branches:
-            #         index_app.add_branch(branch=branch)
-
-            #         globs = ["*.py", "*.txt"]
-            #         for cls_tar in (TarSrc, TarMpyCross):
-            #             cls_tar(branch=branch, app=app, globs=globs, verbose=verbose)
+                    globs = ["*.py", "*.txt"]
+                    for cls_tar in (TarSrc, TarMpyCross):
+                        cls_tar(branch=branch, app=app, globs=globs, verbose=verbose)
 
 
 if __name__ == "__main__":

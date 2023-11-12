@@ -132,7 +132,7 @@ class IndexHtml:
         latest = self.directory / "latest" / branch.name
         latest.parent.mkdir(parents=True, exist_ok=True)
         lines = [
-            f"commit_sha={branch.sha}",
+            f"commit_sha={branch.sha!r}",
             f"dict_tars={dict_tars!r}", "",
         ]
         latest.write_text("\n".join(lines))

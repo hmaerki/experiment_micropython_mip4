@@ -24,24 +24,6 @@ micropython.alloc_emergency_exception_buf(100)
 
 import utils_wlan
 
-
-class DirCache_:
-    def __init__(self):
-        dirs = []
-
-        def recurse(d):
-            for i in os.ilistdir(d):
-                name = f"{d}/{i[0]}"
-                type = i[1]
-                if type == 0x4000:
-                    print(name, type)
-                    dirs.append(name)
-                    recurse(name)
-
-        recurse("")
-        print(dirs)
-
-
 class DirCache:
     def __init__(self):
         # List all directories
@@ -75,7 +57,7 @@ response = urequests.get(URL_APP + "/latest/main")
 assert response.status_code == 200
 with open("config_latest_package.py", "w") as f:
     f.write(response.text)
-
+print(">", response.text, "<")
 print("mem_alloc", gc.mem_alloc())
 print("mem_free", gc.mem_free())
 

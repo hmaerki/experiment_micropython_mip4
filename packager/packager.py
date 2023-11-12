@@ -65,13 +65,13 @@ class IndexHtml:
         self.set_href(link=directory, label=title)
         return IndexHtml(directory=directory, title=title, verbose=self._verbose)
 
-    def add_branch(self, head: git.HEAD) -> None:
+    def add_branch(self, branch: str, sha: str) -> None:
         if self._verbose:
-            print(f"  branch={head.name} sha={head.commit.hexsha}")
-        latest = self.directory / "latest" / head.name
+            print(f"  branch={branch} sha={sha}")
+        latest = self.directory / "latest" / branch
         latest.parent.mkdir(parents=True, exist_ok=True)
-        latest.write_text(head.commit.hexsha + TAR_SUFFIX)
-        self.set_href(link=latest, label=f"Latest on branch {head.name}")
+        latest.write_text(sha + TAR_SUFFIX)
+        self.set_href(link=latest, label=f"Latest on branch {branch}")
 
 
 class TarSrc:
@@ -170,7 +170,7 @@ class Git:
     def checkout(self, remote_head: str) -> git.HEAD:
         ref = self._get_ref(remote_head=remote_head)
         head = ref.checkout()
-        assert isinstance(head,git.HEAD)
+        assert isinstance(head, git.HEAD)
         return head
 
 
@@ -195,7 +195,7 @@ def main(apps: List[str], globs: List[str], verbose: bool) -> None:
             ) as index_app:
                 for branch in git.remote_heads:
                     head = git.checkout(remote_head=branch)
-                    index_app.add_branch(head=head)
+                    index_app.add_branch(branch=branch, sha=head.commit.hexsha)
 
                     globs = ["*.py", "*.txt"]
                     for cls_tar in (TarSrc, TarMpyCross):

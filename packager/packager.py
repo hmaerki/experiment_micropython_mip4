@@ -5,6 +5,7 @@ import subprocess
 import shutil
 import hashlib
 import io
+import json
 import tarfile
 import html
 from typing import Iterator, List
@@ -125,15 +126,14 @@ class IndexHtml:
         assert isinstance(dict_tars, dict)
         if self._verbose:
             print(f"  branch={branch.name} sha={branch.sha}")
-        latest = self.directory / "latest" / branch.name
+        latest = self.directory / "latest" / branch.name"
         latest.parent.mkdir(parents=True, exist_ok=True)
-        lines = [
-            f"COMMIT_SHA={branch.sha!r}",
-            f"COMMIT_PRETTY={branch.commit_pretty!r}",
-            f"DICT_TARS={dict_tars!r}",
-            "",
-        ]
-        latest.write_text("\n".join(lines))
+        dict_json = dict(
+            COMMIT_SHA=branch.sha,
+            COMMIT_PRETTY=branch.commit_pretty,
+            DICT_TARS=dict_tars,
+        )
+        latest.write_text(json.dumps(dict_json, indent=4))
         self.add_index(link=latest, tag="h2")
         self.add_italic(branch.commit_pretty)
 

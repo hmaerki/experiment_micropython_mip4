@@ -1,4 +1,5 @@
 import mip
+import sys
 import urequests
 import micropython
 import config_secrets
@@ -30,6 +31,10 @@ def new_version_available(tar_version="src"):
     with open("config_latest_package.py", "w") as f:
         f.write(response.text)
 
+    try:
+        del sys.modules["config_latest_package"]
+    except KeyError:
+        pass
     import config_latest_package
 
     dict_tar = config_latest_package.DICT_TARS[tar_version]
@@ -40,8 +45,6 @@ def new_version_available(tar_version="src"):
         return dict_tar
 
     if config_latest_package.COMMIT_SHA == config_package_manifest.COMMIT_SHA:
-        import sys
-        del sys.modules['config_package_manifest']
         print("No new download!")
         return None
 

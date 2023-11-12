@@ -79,12 +79,18 @@ def _unpack_tarfile():
         with open(i.name, "wb") as of:
             of.write(f.read())
 
-def _remove_obsolete_files():
-    for file in os.listdir():
-        pass
-        
 
-def download_new_version(dict_tar: dict) -> None:
+def _remove_obsolete_files(files):
+    for file in os.listdir():
+        if file.startswith("config_"):
+            continue
+        if file in files:
+            continue
+        print(f"Remove file {file}")
+        os.remove(file)
+
+
+def download_new_version(dict_tar: dict, config_package_manifest: dict) -> None:
     url = f"{config_secrets.URL_APP}/{dict_tar['link']}"
     print(f"Download new package from: {url}")
     response = urequests.get(url, stream=True)
@@ -99,7 +105,8 @@ def download_new_version(dict_tar: dict) -> None:
 
     _unpack_tarfile()
 
-    _remove_obsolete_files()
+    if config_package_manifest is not None:
+        _remove_obsolete_files(files=config_package_manifest["files"])
 
     os.sync()
     machine.soft_reset()

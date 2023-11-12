@@ -133,7 +133,7 @@ class IndexHtml:
         latest.parent.mkdir(parents=True, exist_ok=True)
         lines = [
             f"COMMIT_SHA={branch.sha!r}",
-            f"COMMIT_PRETTY={branch.commit_pretty!r}"
+            f"COMMIT_PRETTY={branch.commit_pretty!r}",
             f"DICT_TARS={dict_tars!r}",
             "",
         ]

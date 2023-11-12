@@ -52,6 +52,10 @@ class IndexHtml:
             f'<p><code>{relative}</code> <a href="{relative}">{label}</a></p>\n'
         )
 
+    def add_index(self, link: pathlib.Path) -> None:
+        relative = str(link.relative_to(self.directory))
+        self.html.write(f'<p><a href="{relative}">{relative}</a></p>\n')
+
     def new_index(self, relative: str, title: str) -> "IndexHtml":
         directory = self.directory / relative
         self.add_href(link=directory, label=title)
@@ -63,7 +67,7 @@ class IndexHtml:
         latest = self.directory / "latest" / branch
         latest.parent.mkdir(parents=True, exist_ok=True)
         latest.write_text(sha + TAR_SUFFIX)
-        self.add_href(link=latest, label=f"Latest on branch {branch} ({sha})")
+        self.add_index(link=latest)
 
 
 class TarSrc:
@@ -192,9 +196,7 @@ def main(apps: List[str], globs: List[str], verbose: bool) -> None:
                     globs = ["*.py", "*.txt"]
                     for cls_tar in (TarSrc, TarMpyCross):
                         tar = cls_tar(head=head, app=app, globs=globs, verbose=verbose)
-                        index_app.add_href(
-                            link=tar.tar_filename, label=f"Package {tar.version}"
-                        )
+                        index_app.add_index(link=tar.tar_filename)
 
 
 if __name__ == "__main__":

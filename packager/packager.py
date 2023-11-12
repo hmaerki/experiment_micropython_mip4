@@ -146,6 +146,18 @@ class TarMpyCross(TarSrc):
             return io.BytesIO(pathlib.Path(tmp_file.name).read_bytes())
 
 
+class Git:
+    def __init__(self):
+        repo = git.Repo(DIRECTORY_REPO)
+        assert not repo.bare
+        for branch in repo.refs:
+            if not isinstance(branch, git.RemoteReference):
+                continue
+            if branch.remote_head == "HEAD":
+                continue
+            print(f"BRANCH {branch.remote_head}: {branch}")
+
+
 def main(apps: List[str], globs: List[str], verbose: bool) -> None:
     assert isinstance(apps, list)
     assert isinstance(globs, list)
@@ -153,9 +165,9 @@ def main(apps: List[str], globs: List[str], verbose: bool) -> None:
 
     shutil.rmtree(DIRECTORY_WEB_DOWNOADS, ignore_errors=True)
     DIRECTORY_WEB_DOWNOADS.mkdir()
-    repo = git.Repo(DIRECTORY_REPO)
-    assert not repo.bare
+    git = Git()
 
+    return
     with IndexHtml(
         directory=DIRECTORY_WEB_DOWNOADS, title="Downloads", verbose=verbose
     ) as index_top:
@@ -166,7 +178,7 @@ def main(apps: List[str], globs: List[str], verbose: bool) -> None:
             for branch in repo.refs:
                 if not isinstance(branch, git.RemoteReference):
                     continue
-                if branch.remote_head== "HEAD":
+                if branch.remote_head == "HEAD":
                     continue
                 print(f"BRANCH {branch.remote_head}: {branch}")
                 branch.checkout()

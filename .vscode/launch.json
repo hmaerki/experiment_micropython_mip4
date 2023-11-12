@@ -22,8 +22,8 @@
         "--no-checkout=1",
         "--glob=*.py",
         "--glob=*.txt",
-        "app_a/micropython",
-        "app_b"
+        "app_a:app_a/micropython",
+        "app_b:app_b"
       ],
       "console": "integratedTerminal",
       "justMyCode": false

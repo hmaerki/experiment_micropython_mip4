@@ -25,8 +25,9 @@ def new_version_available(tar_version="src"):
     """
     Return download url if new package is available
     """
-    response = urequests.get(config_secrets.URL_APP + config_secrets.BRANCH)
-    assert response.status_code == 200
+    url = config_secrets.URL_APP + config_secrets.BRANCH
+    response = urequests.get(url)
+    assert response.status_code == 200, (response.status_code, url)
     with open("config_latest_package.py", "w") as f:
         f.write(response.text)
 

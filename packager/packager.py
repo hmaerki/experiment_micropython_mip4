@@ -14,11 +14,7 @@ import mpy_cross_v6_1
 
 DIRECTORY_OF_THIS_FILE = pathlib.Path(__file__).parent
 DIRECTORY_REPO = DIRECTORY_OF_THIS_FILE.parent
-DIRECTORY_APP_A = DIRECTORY_REPO / "app_a"
-DIRECTORY_APP_B = DIRECTORY_REPO / "app_b"
 DIRECTORY_WEB_DOWNOADS = DIRECTORY_REPO / "web_downloads"
-assert DIRECTORY_APP_A.is_dir()
-assert DIRECTORY_APP_B.is_dir()
 
 TAR_SUFFIX = ".tar"
 
@@ -146,18 +142,20 @@ class TarSrc:
     def __init__(
         self,
         branch: GitBranch,
-        app: pathlib.Path,
+        app_name: str,
+        app_dir: pathlib.Path,
         globs: List[str],
         verbose: bool,
     ):
         assert isinstance(branch, GitBranch)
-        assert isinstance(app, pathlib.Path)
+        assert isinstance(app_name, str)
+        assert isinstance(app_dir, pathlib.Path)
         assert isinstance(globs, list)
         assert isinstance(verbose, bool)
 
         self._verbose = verbose
         link = self.version + "/" + (branch.sha + TAR_SUFFIX)
-        self.tar_filename = DIRECTORY_WEB_DOWNOADS / app.name / link
+        self.tar_filename = DIRECTORY_WEB_DOWNOADS / app_name / link
 
         self.tar_filename.parent.mkdir(parents=True, exist_ok=True)
         with self.tar_filename.open("wb") as f:
@@ -173,8 +171,8 @@ class TarSrc:
                     tar.addfile(tarinfo, io.BytesIO(data))
 
                 for glob in globs:
-                    for file in app.rglob(glob):
-                        name = str(file.with_suffix(self.py_suffix).relative_to(app))
+                    for file in app_dir.rglob(glob):
+                        name = str(file.with_suffix(self.py_suffix).relative_to(app_dir))
                         files.append(name)
                         if verbose:
                             print(f"    TarSrc: {name=}")
@@ -238,12 +236,17 @@ def main(apps: List[str], globs: List[str], verbose: bool, no_checkout: bool) ->
     with IndexHtml(
         directory=DIRECTORY_WEB_DOWNOADS, title="Downloads", verbose=verbose
     ) as index_top:
-        for app in [pathlib.Path(a).absolute() for a in apps]:
+        for _app in apps:
+            # Example _app: app_a:app_a/micropython
+            # app_name: app_a
+            # app_dir: app_a/micropython
+            app_name, _, app_dir = _app.partition(":")
+            
             if verbose:
-                print(f"app: {app.name}")
+                print(f"app: {app_name}")
             with index_top.new_index(
-                relative=app.name,
-                title=f"Application: {app.name}",
+                relative=app_name,
+                title=f"Application: {app_name}",
             ) as index_app:
                 for branch in git.remote_heads:
                     branch = git.checkout(remote_head=branch, no_checkout=no_checkout)
@@ -252,7 +255,8 @@ def main(apps: List[str], globs: List[str], verbose: bool, no_checkout: bool) ->
                     for cls_tar in (TarSrc, TarMpyCross):
                         tar = cls_tar(
                             branch=branch,
-                            app=app,
+                            app_name=app_name,
+                            app_dir=DIRECTORY_REPO / app_dir,
                             globs=globs,
                             verbose=verbose,
                         )

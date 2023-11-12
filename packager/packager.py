@@ -25,17 +25,22 @@ class GitBranch:
     def __init__(self, branch: str, head: git.HEAD):
         assert isinstance(branch, str)
         assert isinstance(head, git.HEAD)
-        self.branch = branch
+        self.name = branch
         self.head = head
 
     @property
-    def sha(self)  -> str:
-        return self. head.commit.hexsha
+    def sha(self) -> str:
+        return self.head.commit.hexsha
 
     @property
     def commit_pretty(self) -> str:
         commit = self.head.commit
-        return f"{self.branch} - {commit.autor.name} {commit.autor.email}: {commit.summary}"
+        return f"{commit.author.name} <{commit.author.email}>: {commit.summary}"
+
+    @property
+    def pretty(self) -> str:
+        return f"{self.name} - {self.commit_pretty}"
+
 
 class Git:
     def __init__(self):
@@ -58,7 +63,13 @@ class Git:
                 return ref
         raise Exception(f"Not found: remote_head '{remote_head}'")
 
-    def checkout(self, remote_head: str) -> GitBranch:
+    def checkout(self, remote_head: str, no_checkout: bool) -> GitBranch:
+        assert isinstance(remote_head, str)
+        assert isinstance(no_checkout, bool)
+
+        if no_checkout:
+            return GitBranch(branch=remote_head, head=self._repo.head)
+
         ref = self._get_ref(remote_head=remote_head)
         head = ref.checkout()
         assert isinstance(head, git.HEAD)
@@ -96,6 +107,9 @@ class IndexHtml:
             f'<p><code>{relative}</code> <a href="{relative}">{label}</a></p>\n'
         )
 
+    def add_italic(self, text: str) -> None:
+        self.html.write(f"<p><i>{text}</i></p>\n")
+
     def add_index(self, link: pathlib.Path, tag: str) -> None:
         size = link.stat().st_size
         relative = str(link.relative_to(self.directory))
@@ -111,11 +125,12 @@ class IndexHtml:
     def add_branch(self, branch: GitBranch) -> None:
         assert isinstance(branch, GitBranch)
         if self._verbose:
-            print(f"  branch={branch.branch} sha={branch.sha}")
-        latest = self.directory / "latest" / branch
+            print(f"  branch={branch.name} sha={branch.sha}")
+        latest = self.directory / "latest" / branch.name
         latest.parent.mkdir(parents=True, exist_ok=True)
         latest.write_text(branch.sha + TAR_SUFFIX)
         self.add_index(link=latest, tag="h2")
+        self.add_italic(branch.commit_pretty)
 
 
 class TarSrc:
@@ -140,27 +155,31 @@ class TarSrc:
         with self.tar_filename.open("wb") as f:
             files: List[str] = []
             with tarfile.open(name="app.tar", mode="w", fileobj=f) as tar:
+
+                def add_file(name: str, data: bytes):
+                    assert isinstance(name, str)
+                    assert isinstance(data, bytes)
+
+                    tarinfo = tarfile.TarInfo(name=name)
+                    tarinfo.size = len(data)
+                    tar.addfile(tarinfo, io.BytesIO(data))
+
                 for glob in globs:
                     for file in app.rglob(glob):
                         name = str(file.with_suffix(self.py_suffix).relative_to(app))
                         files.append(name)
                         if verbose:
                             print(f"    TarSrc: {name=}")
-                        tarinfo = tarfile.TarInfo(name=name)
-                        tar.addfile(tarinfo, self._get_file(file))
-                tarinfo = tarfile.TarInfo(name="package_properties.py")
+                        add_file(name, file.read_bytes())
+
                 lines: List[str] = [
                     f"FILES={files!r}",
-                    f"branch={branch.branch!r}",
-                    f"sha={branch.sha!r}",
-                    f"commit={branch.commit_pretty!r}",
+                    f"BRANCH={branch.name!r}",
+                    f"SHA={branch.sha!r}",
+                    f"COMMIT={branch.commit_pretty!r}",
+                    "",
                 ]
-                fileio = io.StringIO("\n".join(lines))
-                tar.addfile(tarinfo, fileio)
-
-    def _get_file(self, file: pathlib.Path) -> io.BytesIO:
-        assert isinstance(file, pathlib.Path)
-        return file.open("rb")
+                add_file("package_properties.py", ("\n".join(lines).encode()))
 
     @property
     def version(self) -> str:
@@ -191,10 +210,11 @@ class TarMpyCross(TarSrc):
             return io.BytesIO(pathlib.Path(tmp_file.name).read_bytes())
 
 
-def main(apps: List[str], globs: List[str], verbose: bool) -> None:
+def main(apps: List[str], globs: List[str], verbose: bool, no_checkout: bool) -> None:
     assert isinstance(apps, list)
     assert isinstance(globs, list)
     assert isinstance(verbose, bool)
+    assert isinstance(no_checkout, bool)
 
     shutil.rmtree(DIRECTORY_WEB_DOWNOADS, ignore_errors=True)
     DIRECTORY_WEB_DOWNOADS.mkdir()
@@ -211,7 +231,7 @@ def main(apps: List[str], globs: List[str], verbose: bool) -> None:
                 title=f"Application <b>{app.name}</b>",
             ) as index_app:
                 for branch in git.remote_heads:
-                    branch = git.checkout(remote_head=branch)
+                    branch = git.checkout(remote_head=branch, no_checkout=no_checkout)
                     index_app.add_branch(branch=branch)
 
                     globs = ["*.py", "*.txt"]
@@ -229,6 +249,11 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument(
         "--verbose",
+        type=bool,
+        default=False,
+    )
+    parser.add_argument(
+        "--no-checkout",
         type=bool,
         default=False,
     )
@@ -251,4 +276,5 @@ if __name__ == "__main__":
         apps=args.app,
         globs=args.glob,
         verbose=args.verbose,
+        no_checkout=args.no_checkout,
     )

@@ -25,8 +25,7 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
-  # Single deploy job since we're just deploying
-  deploy-to-web:
+  deploy-web_downloads:
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}

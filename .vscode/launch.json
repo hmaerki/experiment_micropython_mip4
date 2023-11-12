@@ -19,6 +19,7 @@
             "program": "${workspaceFolder}/packager/packager.py",
             "args": [
                 "--verbose=1",
+                "--no-checkout=1",
                 "--glob=*.py",
                 "--glob=*.txt",
                 "app_a",

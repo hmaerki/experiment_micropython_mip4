@@ -22,16 +22,29 @@ TAR_SUFFIX = ".tar"
 
 
 class IndexHtml:
-    def __init__(self, app: pathlib.Path, verbose: bool):
-        assert isinstance(app, pathlib.Path)
+    def __init__(self, directory: pathlib.Path, title: str, verbose: bool):
+        assert isinstance(directory, pathlib.Path)
+        assert isinstance(title, str)
         assert isinstance(verbose, bool)
 
-        self._app = DIRECTORY_WEB_DOWNOADS / app.name
         self._verbose = verbose
-        self._app.mkdir(parents=True, exist_ok=True)
-        self._index_html = self._app / "index.html"
-        self.html = self._index_html.open("w")
-        self.html.write(f"<h1>Micropython index for '{app.name}'</h1>\n")
+        self.directory = directory
+        directory.mkdir(parents=True, exist_ok=True)
+        self.html = self.filename.open("w")
+        self.set_h1(title=title)
+
+    @property
+    def filename(self) -> pathlib.Path:
+        return self.directory / "index.html"
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, *args):
+        self.html.close()
+
+    def set_h1(self, title: str) -> None:
+        self.html.write(f"<h1>{title}</h1>\n")
 
     # def package(self, filename_json: pathlib.Path) -> None:
     #     link = filename_json.relative_to(DIRECTORY_MIP)
@@ -42,10 +55,23 @@ class IndexHtml:
     # def write(self)-> None:
     #     (DIRECTORY_MIP /"index.html").write_text(self.html.getvalue())
 
-    def add(self, branch: git.Head) -> None:
-        latest = self._app / "latest" / branch.name
+    def set_href(self, link: pathlib.Path, label: str) -> None:
+        self.html.write(
+            f'<p><a href="{link.relative_to(self.directory)}">{label}</a></p>\n'
+        )
+
+    def new_index(self, relative: str, title: str) -> "IndexHtml":
+        directory = self.directory / relative
+        self.set_href(link=directory, label=title)
+        return IndexHtml(directory=directory, title=title, verbose=self._verbose)
+
+    def add_branch(self, branch: git.Head) -> None:
+        if self._verbose:
+            print(f"  branch={branch.name} sha={branch.commit.hexsha}")
+        latest = self.directory / "latest" / branch.name
         latest.parent.mkdir(parents=True, exist_ok=True)
         latest.write_text(branch.commit.hexsha + TAR_SUFFIX)
+        self.set_href(link=latest, label=f"Latest on branch {branch.name}")
 
 
 class TarSrc:
@@ -129,20 +155,23 @@ def main(apps: List[str], globs: List[str], verbose: bool) -> None:
     DIRECTORY_WEB_DOWNOADS.mkdir()
     repo = git.Repo(DIRECTORY_REPO)
     assert not repo.bare
-    (DIRECTORY_WEB_DOWNOADS/"index.html").write_text("<h1>Downloads</h1>")
-    for app in [pathlib.Path(a) for a in apps]:
-        if verbose:
-            print(f"app: {app.name}")
 
-        for branch in repo.branches:
-            index_app = IndexHtml(app=app, verbose=verbose)
+    with IndexHtml(
+        directory=DIRECTORY_WEB_DOWNOADS, title="Downloads", verbose=verbose
+    ) as index_top:
+        for app in [pathlib.Path(a).absolute() for a in apps]:
             if verbose:
-                print(f"  branch={branch.name} sha={branch.commit.hexsha}")
-            index_app.add(branch=branch)
+                print(f"app: {app.name}")
 
-            globs = ["*.py", "*.txt"]
-            for cls_tar in (TarSrc, TarMpyCross):
-                cls_tar(branch=branch, app=app, globs=globs, verbose=verbose)
+            for branch in repo.branches:
+                with index_top.new_index(
+                    relative=app.name, title=f"Application'{app.name}'"
+                ) as index_app:
+                    index_app.add_branch(branch=branch)
+
+                    globs = ["*.py", "*.txt"]
+                    for cls_tar in (TarSrc, TarMpyCross):
+                        cls_tar(branch=branch, app=app, globs=globs, verbose=verbose)
 
 
 if __name__ == "__main__":

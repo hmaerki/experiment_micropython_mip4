@@ -10,7 +10,7 @@ import config_secrets
 TAR_FILENAME = const("config_package.tar")
 
 
-class _DirCache:
+class _DirCacheObsolete:
     def __init__(self):
         # List all directories
         # See: https://docs.micropython.org/en/latest/library/os.html#module-os
@@ -71,12 +71,10 @@ def _makedirs_obsolete(filename: str):
 
 def _unpack_tarfile():
     t = tarfile.TarFile(TAR_FILENAME)
-    dircache = _DirCache()
     for i in t:
         if i.type == tarfile.DIRTYPE:
             os.mkdir(i.name)
             continue
-        dircache.makedir_for_file(i.name)
         f = t.extractfile(i)
         print(f"  {TAR_FILENAME}: {i.name}")
         with open(i.name, "wb") as of:

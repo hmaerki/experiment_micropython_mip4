@@ -40,7 +40,7 @@ def new_version_available(tar_version="src"):
 
 
 while True:
-    dict_tar = new_version_available()
+    dict_tar = new_version_available("mpy_version/6.1")
 
     if dict_tar is not None:
         import utils_download_package

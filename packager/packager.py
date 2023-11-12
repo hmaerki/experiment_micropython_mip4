@@ -71,7 +71,7 @@ class IndexHtml:
         latest = self.directory / "latest" / branch
         latest.parent.mkdir(parents=True, exist_ok=True)
         latest.write_text(sha + TAR_SUFFIX)
-        self.set_href(link=latest, label=f"Latest on branch {branch}")
+        self.set_href(link=latest, label=f"Latest on branch {branch} ({sha})")
 
 
 class TarSrc:
@@ -89,15 +89,15 @@ class TarSrc:
 
         self._verbose = verbose
 
-        tar_filename = (
+        self.tar_filename = (
             DIRECTORY_WEB_DOWNOADS
             / app.name
             / self.version
             / (head.commit.hexsha + TAR_SUFFIX)
         )
 
-        tar_filename.parent.mkdir(parents=True, exist_ok=True)
-        with tar_filename.open("wb") as f:
+        self.tar_filename.parent.mkdir(parents=True, exist_ok=True)
+        with self.tar_filename.open("wb") as f:
             with tarfile.open(name="app.tar", mode="w", fileobj=f) as tar:
                 for glob in globs:
                     for file in app.rglob(glob):
@@ -199,7 +199,10 @@ def main(apps: List[str], globs: List[str], verbose: bool) -> None:
 
                     globs = ["*.py", "*.txt"]
                     for cls_tar in (TarSrc, TarMpyCross):
-                        cls_tar(head=head, app=app, globs=globs, verbose=verbose)
+                        tar = cls_tar(head=head, app=app, globs=globs, verbose=verbose)
+                        index_app.set_href(
+                            link=tar.tar_filename, label=f"Package {tar.version}"
+                        )
 
 
 if __name__ == "__main__":

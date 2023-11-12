@@ -187,7 +187,7 @@ class TarSrc:
                     f"COMMIT={branch.commit_pretty!r}",
                     "",
                 ]
-                add_file("config_package_manifest.py", ("\n".join(lines).encode()))
+                add_file("config_package_manifest.py", ("\n".join(lines)).encode())
 
         data = self.tar_filename.read_bytes()
         self.dict_tar = dict(

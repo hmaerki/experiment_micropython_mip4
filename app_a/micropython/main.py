@@ -36,6 +36,7 @@ def new_version_available(tar_version="src"):
     try:
         import config_package_manifest
     except ImportError:
+        print("New download: Failed to 'import config_package_manifest'")
         return dict_tar
     if config_latest_package.COMMIT_SHA == config_package_manifest.COMMIT_SHA:
         print("No new download!")

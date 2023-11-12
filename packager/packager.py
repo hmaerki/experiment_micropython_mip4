@@ -132,8 +132,9 @@ class IndexHtml:
         latest = self.directory / "latest" / branch.name
         latest.parent.mkdir(parents=True, exist_ok=True)
         lines = [
-            f"commit_sha={branch.sha!r}",
-            f"dict_tars={dict_tars!r}",
+            f"COMMIT_SHA={branch.sha!r}",
+            f"COMMIT_PRETTY={branch.commit_pretty!r}"
+            f"DICT_TARS={dict_tars!r}",
             "",
         ]
         latest.write_text("\n".join(lines))
@@ -182,13 +183,13 @@ class TarSrc:
                 lines: List[str] = [
                     f"FILES={files!r}",
                     f"BRANCH={branch.name!r}",
-                    f"SHA={branch.sha!r}",
+                    f"COMMIT_SHA={branch.sha!r}",
                     f"COMMIT={branch.commit_pretty!r}",
                     "",
                 ]
                 add_file("config_packager_manifest.py", ("\n".join(lines).encode()))
 
-        data = tar.tar_filename.read_bytes()
+        data = self.tar_filename.read_bytes()
         self.dict_tar = dict(
             link=link,
             sha256= hashlib.sha256(data).hexdigest(),

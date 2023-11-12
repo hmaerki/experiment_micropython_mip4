@@ -13,6 +13,7 @@ wlan = utils_wlan.WLAN()
 wlan.connect()
 print("Connected to WLAN")
 
+
 def new_version_available(tar_version="src"):
     """
     Return download url if new package is available
@@ -29,7 +30,7 @@ def new_version_available(tar_version="src"):
             config_package_manifest = json.load(f)
     except OSError:
         print("New download: Failed to 'import config_package_manifest'")
-        return  dict_tar
+        return dict_tar
     # print("dict_tar", dict_tar)
     if latest_package["commit_sha"] == config_package_manifest["commit_sha"]:
         print("No new download!")

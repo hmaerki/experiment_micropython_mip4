@@ -39,11 +39,12 @@ def new_version_available(tar_version="src"):
 
 
 while True:
-    dict_tar = new_version_available("mpy_version/6.1")
+    # dict_tar = new_version_available("mpy_version/6.1")
+    dict_tar = new_version_available()
 
     if dict_tar is not None:
         import utils_download_package
 
         utils_download_package.download_new_version(dict_tar)
 
-    print("x")
+    print("Hello Internet Update")

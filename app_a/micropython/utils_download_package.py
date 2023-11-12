@@ -1,6 +1,7 @@
 import os
 import urequests
 import errno
+import machine
 import hashlib
 import tarfile
 import binascii
@@ -96,3 +97,6 @@ def download_new_version(dict_tar: dict) -> None:
         return
     
     _unpack_tarfile()
+
+    machine.soft_reset()
+

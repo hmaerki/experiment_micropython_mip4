@@ -32,17 +32,17 @@ def new_version_available(tar_version="src"):
 
     import config_latest_package
 
-    url = config_latest_package.dict_tars[tar_version]
+    dict_tar = config_latest_package.DICT_TARS[tar_version]
     try:
-        import config_packager_manifest
+        import config_package_manifest
     except ImportError:
-        return url
-    if config_latest_package.commit_sha == config_packager_manifest.COMMIT_SHA:
-        print("New new download")
+        return dict_tar
+    if config_latest_package.COMMIT_SHA == config_package_manifest.COMMIT_SHA:
+        print("No new download!")
         return None
 
-    print(f"New download: {url}")
-    return url
+    print(f"New download: {dict_tar} {config_latest_package.COMMIT_PRETTY}")
+    return dict_tar
 
 
 dict_tar = new_version_available()

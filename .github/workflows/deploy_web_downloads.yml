@@ -40,8 +40,8 @@ jobs:
       - name: Build
         run: |
           pip install -r packager/requirements.txt
-          python -m packager.packager --verbose=1 --glob='*.py' --glob='*.txt' app_a/micropython app_b
-  
+          python -m packager.packager --verbose=1 --glob='*.py' --glob='*.txt' app_a:app_a/micropython app_b:app_b
+
       - name: Setup Pages
         uses: actions/configure-pages@v3
         with:

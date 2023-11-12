@@ -240,7 +240,8 @@ def main(apps: List[str], globs: List[str], verbose: bool, no_checkout: bool) ->
             # Example _app: app_a:app_a/micropython
             # app_name: app_a
             # app_dir: app_a/micropython
-            app_name, _, app_dir = _app.partition(":")
+            app_name, delim, app_dir = _app.partition(":")
+            assert delim =="", f"Expected '{_app}' to contain a ':' delimited (<name>:<path>)"
             
             if verbose:
                 print(f"app: {app_name}")

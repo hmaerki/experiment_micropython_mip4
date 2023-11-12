@@ -180,7 +180,7 @@ class TarSrc:
                     f"COMMIT={branch.commit_pretty!r}",
                     "",
                 ]
-                add_file("package_properties.py", ("\n".join(lines).encode()))
+                add_file("config_packager_manifest.py", ("\n".join(lines).encode()))
 
     @property
     def version(self) -> str:

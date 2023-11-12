@@ -55,7 +55,9 @@ class IndexHtml:
     def add_index(self, link: pathlib.Path, tag: str) -> None:
         size = link.stat().st_size
         relative = str(link.relative_to(self.directory))
-        self.html.write(f'<{tag}>{relative} (<a href="{relative}">{size} Bytes</a>)</{tag}>\n')
+        self.html.write(
+            f'<{tag}>{relative} (<a href="{relative}">{size} Bytes</a>)</{tag}>\n'
+        )
 
     def new_index(self, relative: str, title: str) -> "IndexHtml":
         directory = self.directory / relative
@@ -74,35 +76,45 @@ class IndexHtml:
 class TarSrc:
     def __init__(
         self,
+        branch: str,
         head: git.HEAD,
         app: pathlib.Path,
         globs: List[str],
         verbose: bool,
     ):
+        assert isinstance(branch, str)
         assert isinstance(head, git.HEAD)
         assert isinstance(app, pathlib.Path)
         assert isinstance(globs, list)
         assert isinstance(verbose, bool)
 
         self._verbose = verbose
+        hexsha = head.commit.hexsha
 
         self.tar_filename = (
-            DIRECTORY_WEB_DOWNOADS
-            / app.name
-            / self.version
-            / (head.commit.hexsha + TAR_SUFFIX)
+            DIRECTORY_WEB_DOWNOADS / app.name / self.version / (hexsha + TAR_SUFFIX)
         )
 
         self.tar_filename.parent.mkdir(parents=True, exist_ok=True)
         with self.tar_filename.open("wb") as f:
+            files: List[str] = []
             with tarfile.open(name="app.tar", mode="w", fileobj=f) as tar:
                 for glob in globs:
                     for file in app.rglob(glob):
                         name = str(file.with_suffix(self.py_suffix).relative_to(app))
+                        files.append(name)
                         if verbose:
                             print(f"    TarSrc: {name=}")
                         tarinfo = tarfile.TarInfo(name=name)
                         tar.addfile(tarinfo, self._get_file(file))
+                tarinfo = tarfile.TarInfo(name="package_properties.py")
+                lines: List[str] = [
+                    f"FILES={files!r}",
+                    f"branch={branch!r}",
+                    f"sha={hexsha!r}",
+                ]
+                fileio = io.StringIO("\n".join(lines))
+                tar.addfile(tarinfo, fileio)
 
     def _get_file(self, file: pathlib.Path) -> io.BytesIO:
         assert isinstance(file, pathlib.Path)
@@ -128,12 +140,6 @@ class TarMpyCross(TarSrc):
 
     def _get_file(self, file: pathlib.Path) -> io.BytesIO:
         assert isinstance(file, pathlib.Path)
-        # mpy_cross_v6_1.mpy_cross_compile(
-        #     filename=file,
-        #     file_contents=file.read_text(),
-        #     optimization_level=3,
-        #     arch=mpy_cross_v6_1.Arch.ARMV6M,
-        # )
         with tempfile.NamedTemporaryFile() as tmp_file:
             args = [mpy_cross_v6_1.MPY_CROSS_PATH, "-o", tmp_file.name, str(file)]
             proc = subprocess.run(args, capture_output=True)
@@ -196,7 +202,13 @@ def main(apps: List[str], globs: List[str], verbose: bool) -> None:
 
                     globs = ["*.py", "*.txt"]
                     for cls_tar in (TarSrc, TarMpyCross):
-                        tar = cls_tar(head=head, app=app, globs=globs, verbose=verbose)
+                        tar = cls_tar(
+                            branch=branch,
+                            head=head,
+                            app=app,
+                            globs=globs,
+                            verbose=verbose,
+                        )
                         index_app.add_index(link=tar.tar_filename, tag="p")
 
 

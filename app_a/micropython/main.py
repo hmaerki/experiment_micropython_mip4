@@ -56,4 +56,4 @@ while True:
 
         utils_download_package.download_new_version(dict_tar)
 
-        print("A")
+        print("B")

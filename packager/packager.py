@@ -150,12 +150,14 @@ class Git:
     def __init__(self):
         repo = git.Repo(DIRECTORY_REPO)
         assert not repo.bare
+        self.list_branches = []
         for branch in repo.refs:
             if not isinstance(branch, git.RemoteReference):
                 continue
             if branch.remote_head == "HEAD":
                 continue
             print(f"BRANCH {branch.remote_head}: {branch}")
+            branch.checkout()
 
 
 def main(apps: List[str], globs: List[str], verbose: bool) -> None:

@@ -62,9 +62,9 @@ print("mem_alloc", gc.mem_alloc())
 print("mem_free", gc.mem_free())
 
 import config_latest_package
-url = URL_APP + config_latest_package.dict_tars["src"]
-response = urequests.get(URL_APP + url, stream=True)
-assert response.status_code == 200
+url = URL_APP + "/" + config_latest_package.dict_tars["src"]["link"]
+response = urequests.get(url, stream=True)
+assert response.status_code == 200, response.status_code
 
 def save(response, f, chunk_size=2048):
     # https://github.com/SpotlightKid/mrequests/
@@ -81,10 +81,10 @@ def save(response, f, chunk_size=2048):
 
     response.raw.close()
     print("size", size)
-    print("sha256", binascii.hexlify(hash.digest()))
+    return binascii.hexlify(hash.digest())
 
 
-with open(sha, "wb") as f:
+with open("config_package.tar", "wb") as f:
     save(response, f)
 
 
@@ -110,7 +110,7 @@ def makedirs(filename: str):
         assert False, ex
 
 
-t = tarfile.TarFile(sha)
+t = tarfile.TarFile("config_package.tar")
 dircache = DirCache()
 for i in t:
     print(i.name)

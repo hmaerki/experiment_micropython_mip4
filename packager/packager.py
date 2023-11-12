@@ -133,7 +133,8 @@ class IndexHtml:
         latest.parent.mkdir(parents=True, exist_ok=True)
         lines = [
             f"commit_sha={branch.sha!r}",
-            f"dict_tars={dict_tars!r}", "",
+            f"dict_tars={dict_tars!r}",
+            "",
         ]
         latest.write_text("\n".join(lines))
         self.add_index(link=latest, tag="h2")
@@ -154,9 +155,8 @@ class TarSrc:
         assert isinstance(verbose, bool)
 
         self._verbose = verbose
-        self.tar_filename = (
-            DIRECTORY_WEB_DOWNOADS / app.name / self.version / (branch.sha + TAR_SUFFIX)
-        )
+        link = self.version + "/" + (branch.sha + TAR_SUFFIX)
+        self.tar_filename = DIRECTORY_WEB_DOWNOADS / app.name / link
 
         self.tar_filename.parent.mkdir(parents=True, exist_ok=True)
         with self.tar_filename.open("wb") as f:
@@ -187,6 +187,13 @@ class TarSrc:
                     "",
                 ]
                 add_file("config_packager_manifest.py", ("\n".join(lines).encode()))
+
+        data = tar.tar_filename.read_bytes()
+        self.dict_tar = dict(
+            link=link,
+            sha256= hashlib.sha256(data).hexdigest(),
+            size_bytes= len(data),
+        )
 
     @property
     def version(self) -> str:
@@ -241,7 +248,6 @@ def main(apps: List[str], globs: List[str], verbose: bool, no_checkout: bool) ->
                     branch = git.checkout(remote_head=branch, no_checkout=no_checkout)
 
                     dict_tars = {}
-                    globs = ["*.py", "*.txt"]
                     for cls_tar in (TarSrc, TarMpyCross):
                         tar = cls_tar(
                             branch=branch,
@@ -250,14 +256,7 @@ def main(apps: List[str], globs: List[str], verbose: bool, no_checkout: bool) ->
                             verbose=verbose,
                         )
                         index_app.add_index(link=tar.tar_filename, tag="p")
-                        dict_tars[tar.version] = {
-                            "link": str(
-                                tar.tar_filename.relative_to(index_app.directory)
-                            ),
-                            "sha256": hashlib.sha256(
-                                tar.tar_filename.read_bytes()
-                            ).hexdigest(),
-                        }
+                        dict_tars[tar.version] =tar.dict_tar
 
                     index_app.add_branch(branch=branch, dict_tars=dict_tars)
 

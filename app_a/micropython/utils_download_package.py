@@ -3,6 +3,7 @@ import urequests
 import machine
 import hashlib
 import tarfile
+import json
 import binascii
 import config_secrets
 
@@ -80,7 +81,10 @@ def _unpack_tarfile():
             of.write(f.read())
 
 
-def _remove_obsolete_files(files):
+def _remove_obsolete_files():
+    with open("config_package_manifest.json", "r") as f:
+        files = json.load(f)["files"]
+
     for file in os.listdir():
         if file.startswith("config_"):
             continue
@@ -105,8 +109,7 @@ def download_new_version(dict_tar: dict, config_package_manifest: dict) -> None:
 
     _unpack_tarfile()
 
-    if config_package_manifest is not None:
-        _remove_obsolete_files(files=config_package_manifest["files"])
+    _remove_obsolete_files()
 
     os.sync()
     machine.soft_reset()

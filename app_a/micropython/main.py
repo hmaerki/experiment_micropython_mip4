@@ -29,20 +29,20 @@ def new_version_available(tar_version="src"):
             config_package_manifest = json.load(f)
     except OSError:
         print("New download: Failed to 'import config_package_manifest'")
-        return  dict_tar, None
+        return  dict_tar
     # print("dict_tar", dict_tar)
     if latest_package["commit_sha"] == config_package_manifest["commit_sha"]:
         print("No new download!")
-        return None, None
+        return None
 
     print(f"New download: {latest_package['commit_pretty']}")
-    return dict_tar, config_package_manifest
+    return dict_tar
 
 
 while True:
-    dict_tar, config_package_manifest = new_version_available()
+    dict_tar = new_version_available()
 
     if dict_tar is not None:
         import utils_download_package
 
-        utils_download_package.download_new_version(dict_tar, config_package_manifest)
+        utils_download_package.download_new_version(dict_tar)

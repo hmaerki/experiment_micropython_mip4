@@ -129,9 +129,9 @@ class IndexHtml:
         latest = self.directory / "latest" / branch.name
         latest.parent.mkdir(parents=True, exist_ok=True)
         dict_json = dict(
-            COMMIT_SHA=branch.sha,
-            COMMIT_PRETTY=branch.commit_pretty,
-            DICT_TARS=dict_tars,
+            commit_sha=branch.sha,
+            commit_pretty=branch.commit_pretty,
+            dict_tars=dict_tars,
         )
         latest.write_text(json.dumps(dict_json, indent=4))
         self.add_index(link=latest, tag="h2")

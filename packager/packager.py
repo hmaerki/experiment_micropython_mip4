@@ -53,8 +53,9 @@ class IndexHtml:
         )
 
     def add_index(self, link: pathlib.Path, tag: str) -> None:
+        size = link.stat().st_size
         relative = str(link.relative_to(self.directory))
-        self.html.write(f'<{tag}><a href="{relative}">{relative}</a></{tag}>\n')
+        self.html.write(f'<{tag}><a href="{relative}">{size} Bytes</a></{tag}>{relative}\n')
 
     def new_index(self, relative: str, title: str) -> "IndexHtml":
         directory = self.directory / relative

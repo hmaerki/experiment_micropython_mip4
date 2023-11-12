@@ -93,6 +93,12 @@ def _remove_obsolete_files():
         print(f"Remove file {file}")
         os.remove(file)
 
+    if "main.mpy" in files:
+        print("'main.mpy will not be started by micropython. Add wrapper!")
+        os.rename("main.mpy", "main2.mpy")
+        with os.open("main.py", "w") as f:
+            f.write("import main2\n")
+
 
 def download_new_version(dict_tar: dict) -> None:
     url = f"{config_secrets.URL_APP}/{dict_tar['link']}"

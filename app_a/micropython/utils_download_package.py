@@ -95,8 +95,7 @@ def download_new_version(dict_tar: dict) -> None:
         print(f"{TAR_FILENAME}: {sha256=} {sha256_expected=}!")
         os.remove(TAR_FILENAME)
         return
-    
+
     _unpack_tarfile()
 
     machine.soft_reset()
-

@@ -1,13 +1,6 @@
-import mip
 import urequests
 import micropython
 import config_secrets
-
-try:
-    import tarfile
-except ImportError:
-    mip.install("tarfile")
-    import tarfile
 
 micropython.alloc_emergency_exception_buf(100)
 
@@ -55,5 +48,3 @@ while True:
         import utils_download_package
 
         utils_download_package.download_new_version(dict_tar)
-
-    print("B")

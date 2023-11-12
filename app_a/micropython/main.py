@@ -3,6 +3,8 @@ import mip
 import urequests
 import errno
 import micropython
+import hashlib
+import binascii
 
 try:
     import tarfile
@@ -74,6 +76,8 @@ print(dir(response))
 assert response.status_code == 200
 sha = response.text
 print(f"{sha=}")
+with open("config_latest_package.py", "w") as f:
+    f.write(response.text)
 
 print("mem_alloc", gc.mem_alloc())
 print("mem_free", gc.mem_free())
@@ -83,19 +87,22 @@ response = urequests.get(URL_APP + "/src/" + sha, stream=True)
 assert response.status_code == 200
 
 
+
 def save(response, f, chunk_size=2048):
     size = 0
+    hash = hashlib.sha256()
 
     while True:
         chunk = response.raw.read(chunk_size)
         if not chunk:
             break
         size += len(chunk)
-
+        hash.update(chunk)
         f.write(chunk)
 
     response.raw.close()
     print("size", size)
+    print("sha256", binascii.hexlify(hash.digest()))
 
 
 with open(sha, "wb") as f:

@@ -3,6 +3,7 @@ import pathlib
 import tempfile
 import subprocess
 import shutil
+import hashlib
 import io
 import tarfile
 import html
@@ -123,13 +124,18 @@ class IndexHtml:
         self.add_href(link=directory, label=title)
         return IndexHtml(directory=directory, title=title, verbose=self._verbose)
 
-    def add_branch(self, branch: GitBranch) -> None:
+    def add_branch(self, branch: GitBranch, dict_tars: dict) -> None:
         assert isinstance(branch, GitBranch)
+        assert isinstance(dict_tars, dict)
         if self._verbose:
             print(f"  branch={branch.name} sha={branch.sha}")
         latest = self.directory / "latest" / branch.name
         latest.parent.mkdir(parents=True, exist_ok=True)
-        latest.write_text(branch.sha + TAR_SUFFIX)
+        lines = [
+            f"tar={branch.sha}{TAR_SUFFIX}",
+            f"tars={dict_tars!r}", "",
+        ]
+        latest.write_text("\n".join(lines))
         self.add_index(link=latest, tag="h2")
         self.add_italic(branch.commit_pretty)
 
@@ -155,7 +161,7 @@ class TarSrc:
         self.tar_filename.parent.mkdir(parents=True, exist_ok=True)
         with self.tar_filename.open("wb") as f:
             files: List[str] = []
-            with tarfile.open(name="app.tar", mode="w", fileobj=f, bufsize=1) as tar:
+            with tarfile.open(name="app.tar", mode="w", fileobj=f) as tar:
 
                 def add_file(name: str, data: bytes):
                     assert isinstance(name, str)
@@ -233,8 +239,8 @@ def main(apps: List[str], globs: List[str], verbose: bool, no_checkout: bool) ->
             ) as index_app:
                 for branch in git.remote_heads:
                     branch = git.checkout(remote_head=branch, no_checkout=no_checkout)
-                    index_app.add_branch(branch=branch)
 
+                    dict_tars = {}
                     globs = ["*.py", "*.txt"]
                     for cls_tar in (TarSrc, TarMpyCross):
                         tar = cls_tar(
@@ -244,6 +250,16 @@ def main(apps: List[str], globs: List[str], verbose: bool, no_checkout: bool) ->
                             verbose=verbose,
                         )
                         index_app.add_index(link=tar.tar_filename, tag="p")
+                        dict_tars[tar.version] = {
+                            "link": str(
+                                tar.tar_filename.relative_to(index_app.directory)
+                            ),
+                            "sha256": hashlib.sha256(
+                                tar.tar_filename.read_bytes()
+                            ).hexdigest(),
+                        }
+
+                    index_app.add_branch(branch=branch, dict_tars=dict_tars)
 
 
 if __name__ == "__main__":

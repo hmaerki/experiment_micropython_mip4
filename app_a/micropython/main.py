@@ -13,7 +13,6 @@ micropython.alloc_emergency_exception_buf(100)
 
 import utils_wlan
 
-
 wlan = utils_wlan.WLAN()
 # Make sure, the connection before the reboot is dropped.
 # wlan.power_off()
@@ -47,8 +46,12 @@ def new_version_available(tar_version="src"):
     return dict_tar
 
 
-dict_tar = new_version_available()
+while True:
+    dict_tar = new_version_available()
 
-if dict_tar is not None:
-    import utils_download_package
-    utils_download_package.download_new_version(dict_tar)
+    if dict_tar is not None:
+        import utils_download_package
+
+        utils_download_package.download_new_version(dict_tar)
+
+        print("Blabla")

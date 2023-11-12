@@ -155,7 +155,7 @@ class TarSrc:
         self.tar_filename.parent.mkdir(parents=True, exist_ok=True)
         with self.tar_filename.open("wb") as f:
             files: List[str] = []
-            with tarfile.open(name="app.tar", mode="w", fileobj=f) as tar:
+            with tarfile.open(name="app.tar", mode="w", fileobj=f, bufsize=1) as tar:
 
                 def add_file(name: str, data: bytes):
                     assert isinstance(name, str)

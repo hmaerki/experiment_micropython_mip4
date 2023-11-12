@@ -1,7 +1,7 @@
 import os
 import mip
-import os
 import urequests
+import errno
 import micropython
 
 try:
@@ -10,9 +10,56 @@ except ImportError:
     mip.install("tarfile")
     import tarfile
 
+import gc
+
+# gc.enable()
+print("mem_alloc", gc.mem_alloc())
+print("mem_free", gc.mem_free())
+# gc.collect()
+# gc.disable()
+
 micropython.alloc_emergency_exception_buf(100)
 
 import utils_wlan
+
+
+class DirCache_:
+    def __init__(self):
+        dirs = []
+
+        def recurse(d):
+            for i in os.ilistdir(d):
+                name = f"{d}/{i[0]}"
+                type = i[1]
+                if type == 0x4000:
+                    print(name, type)
+                    dirs.append(name)
+                    recurse(name)
+
+        recurse("")
+        print(dirs)
+
+
+class DirCache:
+    def __init__(self):
+        # List all directories
+        # See: https://docs.micropython.org/en/latest/library/os.html#module-os
+        self._dirs = [i[0] for i in os.ilistdir() if i[1] == 0x4000]
+
+    def makedir_for_file(self, filename: str) -> None:
+        """
+        If the filename is in a directory,
+        creates that directory if it not exists.
+        """
+        dirname = filename.rpartition("/")[0]
+        if dirname == "":
+            return
+        if dirname in self._dirs:
+            return
+        print(f"Create directory {dirname}")
+        os.mkdir(dirname)
+        self._dirs.append(dirname)
+
 
 
 wlan = utils_wlan.WLAN()
@@ -28,17 +75,63 @@ assert response.status_code == 200
 sha = response.text
 print(f"{sha=}")
 
-response = urequests.get(URL_APP + "/src/" + sha)
+print("mem_alloc", gc.mem_alloc())
+print("mem_free", gc.mem_free())
+
+# https://github.com/SpotlightKid/mrequests/
+response = urequests.get(URL_APP + "/src/" + sha, stream=True)
 assert response.status_code == 200
+
+
+def save(response, f, chunk_size=2048):
+    size = 0
+
+    while True:
+        chunk = response.raw.read(chunk_size)
+        if not chunk:
+            break
+        size += len(chunk)
+
+        f.write(chunk)
+
+    response.raw.close()
+    print("size", size)
+
+
 with open(sha, "wb") as f:
-    f.write(response.content)
+    save(response, f)
+
+
+def makedirs(filename: str):
+    """
+    If the filename is in a directory,
+    creates that directory if it not exists.
+    Recurses if required.
+    """
+    dirname = filename.rpartition("/")[0]
+    if dirname == "":
+        # Top directory
+        return
+    try:
+        os.mkdir(dirname)
+    except OSError as ex:
+        if ex.errno == errno.EEXIST:
+            return
+        if ex.errno == errno.ENOENT:
+            # The top directory is missing
+            makedirs(dirname)
+            makedirs(filename)
+        assert False, ex
+
 
 t = tarfile.TarFile(sha)
+dircache = DirCache()
 for i in t:
     print(i.name)
     if i.type == tarfile.DIRTYPE:
         os.mkdir(i.name)
     else:
+        dircache.makedir_for_file(i.name)
         f = t.extractfile(i)
         with open(i.name, "wb") as of:
             of.write(f.read())

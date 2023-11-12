@@ -79,6 +79,9 @@ def _unpack_tarfile():
         with open(i.name, "wb") as of:
             of.write(f.read())
 
+def _remove_obsolete_files():
+    for file in os.listdir():
+        
 
 def download_new_version(dict_tar: dict) -> None:
     url = f"{config_secrets.URL_APP}/{dict_tar['link']}"
@@ -94,6 +97,8 @@ def download_new_version(dict_tar: dict) -> None:
         return
 
     _unpack_tarfile()
+
+    _remove_obsolete_files()
 
     os.sync()
     machine.soft_reset()

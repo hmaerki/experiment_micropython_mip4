@@ -180,14 +180,13 @@ class TarSrc:
                             print(f"    TarSrc: {name=}")
                         add_file(name, self._get_bytes(file))
 
-                lines: List[str] = [
-                    f"FILES={files!r}",
-                    f"BRANCH={branch.name!r}",
-                    f"COMMIT_SHA={branch.sha!r}",
-                    f"COMMIT={branch.commit_pretty!r}",
-                    "",
-                ]
-                add_file("config_package_manifest.py", ("\n".join(lines)).encode())
+                dict_manifest = dict(
+                    files=files,
+                    branch=branch.name,
+                    commit_sha=branch.sha,
+                    commit_pretty=branch.commit_pretty,
+                )
+                add_file("config_package_manifest.json", json.dumps(dict_manifest, indent=4))
 
         data = self.tar_filename.read_bytes()
         self.dict_tar = dict(

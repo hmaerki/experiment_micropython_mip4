@@ -1,4 +1,5 @@
 import argparse
+import importlib
 import pathlib
 import tempfile
 import subprocess
@@ -8,7 +9,7 @@ import io
 import json
 import tarfile
 import html
-from typing import Iterator, List
+from typing import Any, Iterator, List
 
 import git
 import mpy_cross_v6_1
@@ -18,6 +19,7 @@ DIRECTORY_REPO = DIRECTORY_OF_THIS_FILE.parent
 DIRECTORY_WEB_DOWNOADS = DIRECTORY_REPO / "web_downloads"
 
 TAR_SUFFIX = ".tar"
+FILENAME_PACKAGE_PY = "package.py"
 
 
 class GitBranch:
@@ -186,7 +188,10 @@ class TarSrc:
                     commit_sha=branch.sha,
                     commit_pretty=branch.commit_pretty,
                 )
-                add_file("config_package_manifest.json", json.dumps(dict_manifest, indent=4).encode())
+                add_file(
+                    "config_package_manifest.json",
+                    json.dumps(dict_manifest, indent=4).encode(),
+                )
 
         data = self.tar_filename.read_bytes()
         self.dict_tar = dict(
@@ -233,8 +238,19 @@ class TarMpyCross(TarSrc):
             return pathlib.Path(tmp_file.name).read_bytes()
 
 
-def main(apps: List[str], globs: List[str], verbose: bool, no_checkout: bool) -> None:
-    assert isinstance(apps, list)
+def iter_app_package_py(parent_directory: pathlib.Path) -> Iterator[Any]:
+    for filename in parent_directory.glob(f"**/{FILENAME_PACKAGE_PY}"):
+        source = filename.read_text()
+        spec = importlib.util.spec_from_file_location("app_package", source)
+        module = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(module)
+        yield module
+
+
+def main(
+    parent_directory: pathlib.Path, globs: List[str], verbose: bool, no_checkout: bool
+) -> None:
+    assert isinstance(parent_directory, pathlib.Path)
     assert isinstance(globs, list)
     assert isinstance(verbose, bool)
     assert isinstance(no_checkout, bool)
@@ -246,6 +262,8 @@ def main(apps: List[str], globs: List[str], verbose: bool, no_checkout: bool) ->
     with IndexHtml(
         directory=DIRECTORY_WEB_DOWNOADS, title="Downloads", verbose=verbose
     ) as index_top:
+        for package_module in iter_app_package_py(parent_directory=parent_directory):
+            print(package_module)
         for _app in apps:
             # Example _app: app_a:app_a/micropython
             # app_name: app_a
@@ -297,17 +315,15 @@ if __name__ == "__main__":
         help="File suffix. For example '*.py'.",
     )
     parser.add_argument(
-        "app",
-        nargs="+",
-        help="The application directory",
+        "parent_directory",
+        help=f"The parent directory to search '{FILENAME_PACKAGE_PY}' files.",
     )
     args = parser.parse_args()
 
-    # print(f"{args.globs=}")
-    # print(f"{args.app=}")
-
+    parent_directory = pathlib.Path(args.parent_directory)
+    assert parent_directory.exists(), str(parent_directory)
     main(
-        apps=args.app,
+        parent_directory=parent_directory,
         globs=args.glob,
         verbose=args.verbose,
         no_checkout=args.no_checkout,

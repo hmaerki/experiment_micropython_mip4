@@ -16,15 +16,13 @@
       "name": "Python: Packager",
       "type": "python",
       "request": "launch",
-      "program": "${workspaceFolder}/packager/packager.py",
+      "program": "${workspaceFolder}/app_packager/app_packager.py",
       "args": [
         "--verbose=1",
         "--no-checkout=1",
-        "--glob=*.py",
-        "--glob=*.txt",
-        "app_a:app_a/micropython",
-        "app_b:app_b"
+        "."
       ],
+      "cwd": "${workspaceFolder}",
       "console": "integratedTerminal",
       "justMyCode": false
     },
